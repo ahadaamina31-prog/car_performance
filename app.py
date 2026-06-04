@@ -8,6 +8,9 @@ feature_columns = pickle.load(open("model/features.pkl", "rb"))
 
 st.title("🚗 Car Price Prediction App")
 
+st.write("Enter details below:")
+
+# Inputs
 year = st.number_input("Year")
 present_price = st.number_input("Present Price (in Lakhs)")
 kms = st.number_input("Kilometers Driven")
@@ -19,7 +22,7 @@ transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
 if st.button("Predict Price"):
 
-    # Create dictionary
+    # Base input dictionary
     input_dict = {
         "Year": year,
         "Present_Price": present_price,
@@ -47,10 +50,10 @@ if st.button("Predict Price"):
     # Convert to DataFrame
     input_df = pd.DataFrame([input_dict])
 
-    # Align with training columns (IMPORTANT FIX)
+    # Match training columns EXACTLY
     input_df = input_df.reindex(feature_columns, axis=1, fill_value=0)
 
-    # Predict
+    # Prediction
     prediction = model.predict(input_df)
 
     st.success(f"🚘 Predicted Price: ₹ {prediction[0]:.2f} Lakhs")

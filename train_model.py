@@ -1,37 +1,43 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import Pipeline
 import pickle
+import os
 
+# Load dataset
 url = "https://raw.githubusercontent.com/krishnaik06/Car-Price-Prediction/master/car%20data.csv"
 df = pd.read_csv(url)
+
+# Remove missing values
 df = df.dropna()
 
+# ❌ REMOVE STRING COLUMN (VERY IMPORTANT FIX)
+df = df.drop("Car_Name", axis=1)
+
+# One-hot encoding
+df = pd.get_dummies(df, drop_first=True)
+
+# Features and target
 X = df.drop("Selling_Price", axis=1)
 y = df["Selling_Price"]
 
-categorical_features = ["Fuel_Type", "Seller_Type", "Transmission"]
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("cat", OneHotEncoder(drop="first"), categorical_features)
-    ],
-    remainder="passthrough"
-)
-
-model = Pipeline(steps=[
-    ("preprocessor", preprocessor),
-    ("regressor", RandomForestRegressor())
-])
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
+# Model
+model = RandomForestRegressor()
 model.fit(X_train, y_train)
 
+# Accuracy
 print("Accuracy:", model.score(X_test, y_test))
 
+# Save folder
+os.makedirs("model", exist_ok=True)
+
+# Save model
 pickle.dump(model, open("model/car_model.pkl", "wb"))
-print("Model saved successfully")
+
+# Save feature columns (VERY IMPORTANT)
+pickle.dump(X.columns, open("model/features.pkl", "wb"))
+
+print("Model + Features saved successfully")
