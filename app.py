@@ -1,45 +1,43 @@
 import streamlit as st
 import pickle
-import pandas as pd
+import numpy as np
 
+# Load model
 model = pickle.load(open("model/car_model.pkl", "rb"))
-features = pickle.load(open("model/features.pkl", "rb"))
 
-st.title("🚗 Car Price Prediction")
+st.title("🚗 Car Price Prediction App")
 
-# input
+st.write("Enter details below:")
+
 year = st.number_input("Year")
-present_price = st.number_input("Present Price")
-kms = st.number_input("KMs Driven")
-owner = st.number_input("Owner")
+present_price = st.number_input("Present Price (in Lakhs)")
+kms = st.number_input("Kilometers Driven")
+owner = st.number_input("Number of Owners")
 
 fuel = st.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
 seller = st.selectbox("Seller Type", ["Dealer", "Individual"])
 transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
-if st.button("Predict"):
+if st.button("Predict Price"):
 
-    # Create empty dataframe
-    input_dict = {col: 0 for col in features}
+    # Manual encoding (same as training logic)
+    fuel_diesel = 1 if fuel == "Diesel" else 0
+    fuel_petrol = 1 if fuel == "Petrol" else 0
 
-    # fill numeric values
-    if "Year" in input_dict: input_dict["Year"] = year
-    if "Present_Price" in input_dict: input_dict["Present_Price"] = present_price
-    if "Kms_Driven" in input_dict: input_dict["Kms_Driven"] = kms
-    if "Owner" in input_dict: input_dict["Owner"] = owner
+    seller_ind = 1 if seller == "Individual" else 0
+    trans_manual = 1 if transmission == "Manual" else 0
 
-    # fill categorical
-    if f"Fuel_Type_{fuel}" in input_dict:
-        input_dict[f"Fuel_Type_{fuel}"] = 1
+    input_data = np.array([[
+        year,
+        present_price,
+        kms,
+        owner,
+        fuel_diesel,
+        fuel_petrol,
+        seller_ind,
+        trans_manual
+    ]])
 
-    if f"Seller_Type_{seller}" in input_dict:
-        input_dict[f"Seller_Type_{seller}"] = 1
+    prediction = model.predict(input_data)
 
-    if f"Transmission_{transmission}" in input_dict:
-        input_dict[f"Transmission_{transmission}"] = 1
-
-    input_df = pd.DataFrame([input_dict])
-
-    prediction = model.predict(input_df)[0]
-
-    st.success(f"Predicted Price: ₹ {prediction:.2f} Lakhs")
+    st.success(f"🚘 Predicted Price: ₹ {prediction[0]:.2f} Lakhs")
