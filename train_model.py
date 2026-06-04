@@ -7,7 +7,7 @@ import os
 # =========================
 # 1. LOAD DATASET ONLINE
 # =========================
-url = "https://raw.githubusercontent.com/krishnaik06/Car-Price-Prediction/master/car data.csv"
+url = "https://raw.githubusercontent.com/krishnaik06/Car-Price-Prediction/master/car%20data.csv"
 
 df = pd.read_csv(url)
 
