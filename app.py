@@ -1,57 +1,45 @@
 import streamlit as st
 import pickle
-import numpy as np
+import pandas as pd
 
-# =========================
-# 1. LOAD MODEL
-# =========================
 model = pickle.load(open("model/car_model.pkl", "rb"))
+features = pickle.load(open("model/features.pkl", "rb"))
 
-st.title("🚗 Car Price Prediction Dashboard")
-st.write("Enter car details to predict selling price")
+st.title("🚗 Car Price Prediction")
 
-# =========================
-# 2. USER INPUT
-# =========================
+# input
+year = st.number_input("Year")
+present_price = st.number_input("Present Price")
+kms = st.number_input("KMs Driven")
+owner = st.number_input("Owner")
 
-year = st.number_input("Year of Purchase", 1990, 2026, step=1)
-present_price = st.number_input("Present Price (in Lakhs)", 0.0, 50.0)
-kms_driven = st.number_input("Kilometers Driven", 0, 500000, step=1000)
+fuel = st.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
+seller = st.selectbox("Seller Type", ["Dealer", "Individual"])
+transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
-owner = st.selectbox("Number of Owners", [0, 1, 2, 3])
+if st.button("Predict"):
 
-fuel_type = st.selectbox("Fuel Type", ["Petrol", "Diesel", "CNG"])
-seller_type = st.selectbox("Seller Type", ["Dealer", "Individual"])
-transmission = st.selectbox("Transmission Type", ["Manual", "Automatic"])
+    # Create empty dataframe
+    input_dict = {col: 0 for col in features}
 
-# =========================
-# 3. CONVERT INPUT TO MODEL FORMAT
-# =========================
+    # fill numeric values
+    if "Year" in input_dict: input_dict["Year"] = year
+    if "Present_Price" in input_dict: input_dict["Present_Price"] = present_price
+    if "Kms_Driven" in input_dict: input_dict["Kms_Driven"] = kms
+    if "Owner" in input_dict: input_dict["Owner"] = owner
 
-# Manual encoding (must match training dummies)
-fuel_diesel = 1 if fuel_type == "Diesel" else 0
-fuel_petrol = 1 if fuel_type == "Petrol" else 0
+    # fill categorical
+    if f"Fuel_Type_{fuel}" in input_dict:
+        input_dict[f"Fuel_Type_{fuel}"] = 1
 
-seller_individual = 1 if seller_type == "Individual" else 0
+    if f"Seller_Type_{seller}" in input_dict:
+        input_dict[f"Seller_Type_{seller}"] = 1
 
-trans_manual = 1 if transmission == "Manual" else 0
+    if f"Transmission_{transmission}" in input_dict:
+        input_dict[f"Transmission_{transmission}"] = 1
 
-# Feature array (order must match training dataset)
-input_data = np.array([[
-    year,
-    present_price,
-    kms_driven,
-    owner,
-    fuel_diesel,
-    fuel_petrol,
-    seller_individual,
-    trans_manual
-]])
+    input_df = pd.DataFrame([input_dict])
 
-# =========================
-# 4. PREDICTION BUTTON
-# =========================
+    prediction = model.predict(input_df)[0]
 
-if st.button("Predict Price"):
-    prediction = model.predict(input_data)
-    st.success(f"🚘 Estimated Selling Price: ₹ {prediction[0]:.2f} Lakhs")
+    st.success(f"Predicted Price: ₹ {prediction:.2f} Lakhs")
