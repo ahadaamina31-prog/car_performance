@@ -1,13 +1,12 @@
 import streamlit as st
 import pickle
-import numpy as np
+import pandas as pd
 
-# Load model
+# Load model + features
 model = pickle.load(open("model/car_model.pkl", "rb"))
+feature_columns = pickle.load(open("model/features.pkl", "rb"))
 
 st.title("🚗 Car Price Prediction App")
-
-st.write("Enter details below:")
 
 year = st.number_input("Year")
 present_price = st.number_input("Present Price (in Lakhs)")
@@ -20,24 +19,38 @@ transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
 if st.button("Predict Price"):
 
-    # Manual encoding (same as training logic)
-    fuel_diesel = 1 if fuel == "Diesel" else 0
-    fuel_petrol = 1 if fuel == "Petrol" else 0
+    # Create dictionary
+    input_dict = {
+        "Year": year,
+        "Present_Price": present_price,
+        "Kms_Driven": kms,
+        "Owner": owner,
 
-    seller_ind = 1 if seller == "Individual" else 0
-    trans_manual = 1 if transmission == "Manual" else 0
+        "Fuel_Type_Diesel": 0,
+        "Fuel_Type_Petrol": 0,
+        "Seller_Type_Individual": 0,
+        "Transmission_Manual": 0
+    }
 
-    input_data = np.array([[
-        year,
-        present_price,
-        kms,
-        owner,
-        fuel_diesel,
-        fuel_petrol,
-        seller_ind,
-        trans_manual
-    ]])
+    # Encoding
+    if fuel == "Diesel":
+        input_dict["Fuel_Type_Diesel"] = 1
+    elif fuel == "Petrol":
+        input_dict["Fuel_Type_Petrol"] = 1
 
-    prediction = model.predict(input_data)
+    if seller == "Individual":
+        input_dict["Seller_Type_Individual"] = 1
+
+    if transmission == "Manual":
+        input_dict["Transmission_Manual"] = 1
+
+    # Convert to DataFrame
+    input_df = pd.DataFrame([input_dict])
+
+    # Align with training columns (IMPORTANT FIX)
+    input_df = input_df.reindex(feature_columns, axis=1, fill_value=0)
+
+    # Predict
+    prediction = model.predict(input_df)
 
     st.success(f"🚘 Predicted Price: ₹ {prediction[0]:.2f} Lakhs")
